@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Tabla de Usuarios para cumplir con la Autenticación JWT
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Entidad Principal: Pokémon
+model Pokemon {
+  id             Int      @id 
+  name           String   @unique
+  height         Int
+  weight         Int
+  spriteImageUrl String?
+  
+  // Relación N:M con Type
+  types          Type[]   @relation("PokemonToType")
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Entidad Secundaria: Tipo de Pokémon
+model Type {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  
+  // Relación N:M con Pokemon
+  pokemons  Pokemon[] @relation("PokemonToType")
+}
