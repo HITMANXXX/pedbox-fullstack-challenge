@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { PokemonService } from './pokemon.service';
 import { PaginationDto } from './dto/pagination.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('pokemon')
 export class PokemonController {
@@ -11,6 +12,7 @@ export class PokemonController {
     return this.pokemonService.syncPokemonData();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Query() paginationDto: PaginationDto) {
     const page = paginationDto.page ? parseInt(paginationDto.page, 10) : 1;
@@ -22,6 +24,7 @@ export class PokemonController {
     return this.pokemonService.findAll(validPage, validLimit);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.pokemonService.findOne(id);
