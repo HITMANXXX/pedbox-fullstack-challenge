@@ -23,8 +23,13 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="bg-red-500 py-8 text-center shadow-inner">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-8 border-white bg-white shadow-md">
-            <div className="h-8 w-8 rounded-full border-4 border-gray-200 bg-white shadow-inner"></div>
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md p-2">
+            <img 
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" 
+              alt="Pokébola" 
+              className="h-full w-full object-contain" 
+              style={{ imageRendering: 'pixelated' }} 
+            />
           </div>
           <h2 className="font-pokemon mt-2 text-sm text-white tracking-widest drop-shadow-md">INGRESA A TU POKÉDEX</h2>
         </div>

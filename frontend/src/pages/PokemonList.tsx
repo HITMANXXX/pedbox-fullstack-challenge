@@ -26,21 +26,31 @@ export default function PokemonList() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    const controller = new AbortController();
+    
     const fetchPokemons = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await api.get(`/pokemon?page=${page}&limit=12`);
+        const response = await api.get(`/pokemon?page=${page}&limit=12`, {
+          signal: controller.signal
+        });
         setPokemons(response.data.data);
         setMeta(response.data.meta);
-      } catch (err) {
-        setError('Error al cargar la lista de Pokémon.');
+      } catch (err: any) {
+        if (err.name !== 'CanceledError' && err.message !== 'canceled') {
+          setError('Error al cargar la lista de Pokémon.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchPokemons();
+    
+    return () => {
+      controller.abort();
+    };
   }, [page]);
 
   return (
@@ -48,14 +58,19 @@ export default function PokemonList() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col items-center justify-between gap-4 rounded-3xl bg-white p-6 shadow-md md:flex-row md:p-8">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-inner">
-              <div className="h-4 w-4 rounded-full bg-white"></div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md p-1">
+              <img 
+                src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" 
+                alt="Pokébola" 
+                className="h-full w-full object-contain" 
+                style={{ imageRendering: 'pixelated' }} 
+              />
             </div>
             <h1 className="font-pokemon text-2xl text-gray-800 md:text-3xl">Pokédex</h1>
           </div>
           <button 
             onClick={logout}
-            className="rounded-xl bg-gray-800 px-6 py-3 font-bold text-white shadow-md transition-all active:scale-95 hover:bg-gray-900"
+            className="rounded-xl bg-gray-800 px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base font-bold text-white shadow-md transition-all active:scale-95 hover:bg-gray-900"
           >
             Cerrar sesión
           </button>
@@ -79,12 +94,12 @@ export default function PokemonList() {
                 <Link 
                   key={pokemon.id} 
                   to={`/pokemon/${pokemon.id}`}
-                  className="group flex cursor-pointer flex-col items-center overflow-hidden rounded-3xl bg-white p-6 shadow-md transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl"
+                  className="relative group flex cursor-pointer flex-col items-center overflow-hidden rounded-3xl bg-white p-6 shadow-md transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl"
                 >
-                  <div className="relative mb-6 flex h-40 w-40 items-center justify-center rounded-full bg-gray-50 transition-colors duration-300 group-hover:bg-blue-50">
-                    <span className="absolute right-2 top-2 font-black text-gray-300 opacity-50 group-hover:text-blue-200">
-                      #{String(pokemon.id).padStart(3, '0')}
-                    </span>
+                  <span className="absolute right-6 top-6 font-black text-gray-300 opacity-50 transition-colors duration-300 group-hover:text-blue-200">
+                    #{String(pokemon.id).padStart(3, '0')}
+                  </span>
+                  <div className="mb-6 flex h-40 w-40 items-center justify-center rounded-full bg-gray-50 transition-colors duration-300 group-hover:bg-blue-50">
                     <img 
                       src={pokemon.spriteImageUrl} 
                       alt={pokemon.name} 
@@ -110,22 +125,22 @@ export default function PokemonList() {
             </div>
 
             {meta && (
-              <div className="mt-12 flex items-center justify-center gap-6 rounded-3xl bg-white p-6 shadow-md">
+              <div className="mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-6 rounded-3xl bg-white p-4 sm:p-6 shadow-md">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="flex items-center justify-center rounded-xl bg-red-500 px-6 py-3 font-bold text-white shadow-md transition-all active:scale-95 hover:bg-red-600 disabled:pointer-events-none disabled:opacity-40"
+                  className="flex items-center justify-center rounded-xl bg-red-500 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base font-bold text-white shadow-md transition-all active:scale-95 hover:bg-red-600 disabled:pointer-events-none disabled:opacity-40"
                 >
                   Anterior
                 </button>
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold text-gray-400 uppercase">Página</span>
-                  <span className="font-pokemon text-xl text-gray-800">{meta.page} / {meta.lastPage}</span>
+                <div className="flex flex-col items-center mx-2">
+                  <span className="text-xs sm:text-sm font-bold text-gray-400 uppercase">Página</span>
+                  <span className="font-pokemon text-lg sm:text-xl text-gray-800">{meta.page} / {meta.lastPage}</span>
                 </div>
                 <button
                   onClick={() => setPage(p => Math.min(meta.lastPage, p + 1))}
                   disabled={page === meta.lastPage}
-                  className="flex items-center justify-center rounded-xl bg-red-500 px-6 py-3 font-bold text-white shadow-md transition-all active:scale-95 hover:bg-red-600 disabled:pointer-events-none disabled:opacity-40"
+                  className="flex items-center justify-center rounded-xl bg-red-500 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base font-bold text-white shadow-md transition-all active:scale-95 hover:bg-red-600 disabled:pointer-events-none disabled:opacity-40"
                 >
                   Siguiente
                 </button>

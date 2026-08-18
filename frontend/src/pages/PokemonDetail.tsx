@@ -19,13 +19,20 @@ export default function PokemonDetail() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const controller = new AbortController();
+    
     const fetchPokemon = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await api.get(`/pokemon/${id}`);
+        const response = await api.get(`/pokemon/${id}`, {
+          signal: controller.signal
+        });
         setPokemon(response.data);
       } catch (err: any) {
+        if (err.name === 'CanceledError' || err.message === 'canceled') {
+          return;
+        }
         if (err.response?.status === 404) {
           setError('¡Pokémon no encontrado!');
         } else {
@@ -39,6 +46,10 @@ export default function PokemonDetail() {
     if (id) {
       fetchPokemon();
     }
+    
+    return () => {
+      controller.abort();
+    };
   }, [id]);
 
   return (
