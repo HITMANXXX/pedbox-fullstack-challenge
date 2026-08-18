@@ -7,7 +7,7 @@ export class PokemonService {
 
   async syncPokemonData() {
     try {
-      const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=50');
+      const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
       if (!response.ok) {
         throw new Error('Failed to fetch from PokeAPI');
       }
@@ -58,18 +58,43 @@ export class PokemonService {
     }
   }
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll(
+    page: number = 1, 
+    limit: number = 10,
+    search?: string,
+    type?: string,
+    sortBy: string = 'id',
+    order: 'asc' | 'desc' = 'asc'
+  ) {
     const skip = (page - 1) * limit;
     const take = limit;
 
+    const where: any = {};
+
+    if (search) {
+      where.name = { contains: search, mode: 'insensitive' };
+    }
+
+    if (type) {
+      where.types = { some: { name: type } };
+    }
+
+    const orderBy: any = {};
+    if (sortBy === 'name') {
+      orderBy.name = order;
+    } else {
+      orderBy.id = order;
+    }
+
     const [data, total] = await Promise.all([
       this.prisma.pokemon.findMany({
+        where,
         skip,
         take,
         include: { types: true },
-        orderBy: { id: 'asc' },
+        orderBy,
       }),
-      this.prisma.pokemon.count(),
+      this.prisma.pokemon.count({ where }),
     ]);
 
     const lastPage = Math.ceil(total / limit);

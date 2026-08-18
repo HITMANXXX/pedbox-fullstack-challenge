@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { Link } from 'react-router-dom';
-import { getTypeColors } from '../utils/typeColors';
+import { getTypeColors, POKEMON_TYPES } from '../utils/typeColors';
 
 interface Pokemon {
   id: number;
@@ -24,6 +24,23 @@ export default function PokemonList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedType, setSelectedType] = useState('');
+  const [sortOption, setSortOption] = useState('id-asc');
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, selectedType]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,7 +49,18 @@ export default function PokemonList() {
       setLoading(true);
       setError('');
       try {
-        const response = await api.get(`/pokemon?page=${page}&limit=12`, {
+        const [sortBy, order] = sortOption.split('-');
+        
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: '12',
+          ...(debouncedSearch && { search: debouncedSearch }),
+          ...(selectedType && { type: selectedType }),
+          sortBy,
+          order,
+        });
+
+        const response = await api.get(`/pokemon?${params.toString()}`, {
           signal: controller.signal
         });
         setPokemons(response.data.data);
@@ -51,7 +79,15 @@ export default function PokemonList() {
     return () => {
       controller.abort();
     };
-  }, [page]);
+  }, [page, debouncedSearch, selectedType, sortOption]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setSelectedType('');
+    setSortOption('id-asc');
+    setPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
@@ -81,6 +117,46 @@ export default function PokemonList() {
             {error}
           </div>
         )}
+
+        <div className="mb-8 flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-md md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-1 flex-col gap-4 sm:flex-row w-full">
+            <input
+              type="text"
+              placeholder="Buscar Pokémon..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-800 outline-none transition-colors focus:border-red-500 focus:bg-white sm:w-1/3"
+            />
+            
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-800 outline-none transition-colors focus:border-red-500 focus:bg-white sm:w-1/3 capitalize"
+            >
+              <option value="">Todos los Tipos</option>
+              {POKEMON_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+              className="w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-800 outline-none transition-colors focus:border-red-500 focus:bg-white sm:w-1/3"
+            >
+              <option value="id-asc">Número (#)</option>
+              <option value="name-asc">Nombre (A-Z)</option>
+              <option value="name-desc">Nombre (Z-A)</option>
+            </select>
+          </div>
+
+          <button
+            onClick={clearFilters}
+            className="flex items-center justify-center rounded-xl border-2 border-red-500 bg-white px-4 py-3 font-bold text-red-500 shadow-sm transition-all active:scale-95 hover:bg-red-50 md:w-auto w-full whitespace-nowrap"
+          >
+            Limpiar Filtros
+          </button>
+        </div>
 
         {loading ? (
           <div className="flex h-[50vh] flex-col items-center justify-center gap-4">

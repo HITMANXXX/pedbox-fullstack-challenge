@@ -21,7 +21,14 @@ export class PokemonController {
     const validPage = isNaN(page) || page < 1 ? 1 : page;
     const validLimit = isNaN(limit) || limit < 1 ? 10 : limit;
 
-    return this.pokemonService.findAll(validPage, validLimit);
+    return this.pokemonService.findAll(
+      validPage, 
+      validLimit, 
+      paginationDto.search, 
+      paginationDto.type, 
+      paginationDto.sortBy, 
+      paginationDto.order
+    );
   }
 
   @UseGuards(JwtAuthGuard)
